@@ -9,6 +9,7 @@ class transdata:
         self.initdb()
         self.agency = agency
         self.agencyRoutes = {}
+        self.routeTimes = {}
         self.userRoutes = []
         self.userTrips = []
         self.userStops = []
@@ -55,31 +56,54 @@ class transdata:
     def get_user_routes (self):	
         str = "("
         for num in self.userRoutes:
-            str += "routes.route_short_name == '" + num + "' OR "
+            str += "route_short_name == '" + num + "' OR "
             
         str = str[:-4]
         str += ");"
         self.userRoutes = []
-                    
-        self.cur.execute("SELECT routes.route_id  \
-                            FROM agency,routes                        \
-                            WHERE agency.agency_id == routes.agency_id and \
-                            agency.agency_id == '" + self.agency + "' and " +  
-                            str
-                        )
-        self.userRoutes.append(self.cur.fetchall())
+
+        self.cur.execute("SELECT route_id \
+                          FROM agency NATURAL JOIN routes\
+                          WHERE agency_id == '"+ self.agency + "' AND " + 
+                          str)
+  
+        self.userRoutes =(self.cur.fetchall())
         
     def get_user_trips(self):
-        self.cur.execute("SELECT trips.trip_id                \
-                          FROM trips,routes,stop_times            \
-                          WHERE trips.route_id == routes.route_id and  \
-                                stop_times.trip_id == trips.trip_id \
-                                ")
-        print self.cur.fetchall()
+        str = " "
+        for routeID in self.userRoutes:
+            self.cur.execute("SELECT trip_id, trip_headsign              \
+                                FROM routes NATURAL JOIN trips         \
+                                WHERE route_id == '" + routeID[0] + "';")
+            self.agencyRoutes[routeID[0]] = self.cur.fetchall()
+            str += "route_id != '" + routeID[0] + "' AND " 
+            
+        str = str[:-4]
         
-    def build_data(self, routenum):
+        
+        self.cur.execute("DELETE FROM trips \
+                            WHERE" + str)  
+        self.cur.execute("SELECT * FROM trips")
+        print self.agencyRoutes
+        print self.cur.fetchall()
+    
+    def get_times_for_route_at_stop(self):
+    
+        for (key, val) in self.agencyRoutes.iteritems():
+            for (id,headsign) in val:
+                self.cur.execute("SELECT departure_time\
+                                    FROM stop_times\
+                                    WHERE trip_id = '" + id + "' AND stop_id = '100666';")
+                self.routeTimes[key] = self.cur.fetchall()
+    
+    
+    def build_data(self):
         self.get_user_routes()
         self.get_user_trips()
+        self.get_times_for_route_at_stop()
+        #print self.routeTimes
+        
+        
         return 
 
     """
@@ -103,6 +127,5 @@ td.init()
 td.add_route("26")
 td.add_route("39")
 td.add_stopID("101414")
-td.print_routes()
-td.build_data("26")
-td.print_routes()
+td.add_stopID("100666")
+td.build_data()
