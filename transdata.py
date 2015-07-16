@@ -2,6 +2,7 @@ import csv
 import sqlite3 as sql
 import sqlalchemy
 import os
+import time 
 
 class transdata:
 
@@ -9,6 +10,8 @@ class transdata:
         self.initdb()
         self.agency = agency
         self.agencyRoutes = {}
+        self.routeTrips = {}
+        self.routeTimes = {}
         self.userRoutes = []
         self.userTrips = []
         self.userStops = []
@@ -27,9 +30,7 @@ class transdata:
     
     def add_route (self, routenum):
         self.userRoutes.append(routenum)
-    
-
-    
+        
     def print_routes(self):
         print self.userRoutes
 
@@ -53,33 +54,38 @@ class transdata:
         
     """ ------- Build DATA ----  """     
     def get_user_routes (self):	
-        str = "("
-        for num in self.userRoutes:
-            str += "routes.route_short_name == '" + num + "' OR "
-            
-        str = str[:-4]
-        str += ");"
-        self.userRoutes = []
-                    
-        self.cur.execute("SELECT routes.route_id  \
-                            FROM agency,routes                        \
-                            WHERE agency.agency_id == routes.agency_id and \
-                            agency.agency_id == '" + self.agency + "' and " +  
-                            str
-                        )
-        self.userRoutes.append(self.cur.fetchall())
+        # takes the self.userRoutes list and REPLACES it with their route_id's
+        user_routes_string = ', '.join(self.userRoutes)
+        sql = 'SELECT route_id FROM routes NATURAL JOIN agency WHERE route_short_name IN ({})'.format(user_routes_string)
+        self.cur.execute(sql)
+        self.userRoutes = [x[0] for x in self.cur.fetchall()]
         
     def get_user_trips(self):
-        self.cur.execute("SELECT trips.trip_id                \
-                          FROM trips,routes,stop_times            \
-                          WHERE trips.route_id == routes.route_id and  \
-                                stop_times.trip_id == trips.trip_id \
-                                ")
-        print self.cur.fetchall()
+        # take the self.userRoutes list of route_id's and return all of those routes' trips
+        for routeid in self.userRoutes:
+            self.cur.execute("SELECT trip_id                \
+                                    FROM trips NATURAL JOIN routes             \
+                                    WHERE route_id == '" + routeid + "';" )
+            self.routeTrips[routeid] = [x[0] for x in self.cur.fetchall()]
+        
+    def get_times_for_trips_at_stops(self):
+        for (route,trips) in self.routeTrips.iteritems():
+            user_trips_string = ["'{}'".format(id) for id in trips]
+            user_trips_string= ', '.join(user_trips_string)
+            
+            user_stopid_string = ', '.join(self.userStops)
+          
+            sql = 'SELECT departure_time,stop_id,trip_id FROM stop_times WHERE trip_id IN ({}) AND stop_id IN ({})'.format(user_trips_string,user_stopid_string)
+            self.cur.execute(sql)
+            self.routeTimes[route] = [x for x in self.cur.fetchall()]
+            self.routeTimes[route].sort()
+        
         
     def build_data(self, routenum):
         self.get_user_routes()
         self.get_user_trips()
+        self.get_times_for_trips_at_stops()
+        print self.routeTimes
         return 
 
     """
@@ -102,7 +108,5 @@ td = transdata()
 td.init()
 td.add_route("26")
 td.add_route("39")
-td.add_stopID("101414")
-td.print_routes()
+td.add_stopID("101362")
 td.build_data("26")
-td.print_routes()
