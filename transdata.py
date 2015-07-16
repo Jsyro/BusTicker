@@ -1,8 +1,11 @@
+#So, this doesn't account for the date right now... it needs to.
+
 import csv
 import sqlite3 as sql
 import sqlalchemy
 import os
-import time 
+import datetime
+import time
 
 class transdata:
 
@@ -15,14 +18,16 @@ class transdata:
         self.userRoutes = []
         self.userTrips = []
         self.userStops = []
-
+        self.calendar_date = "" 
+        self.service_ids = []
+		
     def initdb(self):
         conn = sql.connect(os.getcwd() + "\\transdata\\bus_ticker.db")
         self.cur = conn.cursor()
-        for fname in os.listdir("transdata"):
-            (name,ext) = os.path.splitext(os.getcwd() + "\\transdata\\" + fname)
-            if (ext == ".txt"):
-                os.rename(name+ext, name +".csv")
+		# TO-DO: build the database if it's not built 
+		#			1) import all the .txt to tables
+		#			2) add indices to (stop_times, routes, and trips)
+	
                 
                 
     """  ------  Routes  -------- """ 
@@ -62,10 +67,40 @@ class transdata:
         
     def get_user_trips(self):
         # take the self.userRoutes list of route_id's and return all of those routes' trips
+        service_string = time.strftime("%Y%m%d")
+        weekday = datetime.datetime.today().weekday()
+        if  weekday == 0:
+            weekday = "monday"
+        if  weekday == 1:
+            weekday = "tuesday"
+        if  weekday == 2:
+            weekday = "wednesday"
+        if  weekday == 3:
+            weekday = "thursday"
+        if  weekday == 4:
+            weekday = "friday"
+        if  weekday == 5:
+            weekday = "saturday"
+        if  weekday == 6:
+            weekday = "sunday"
+            
+           
+        
+        user_routes_string = ["'{}'".format(id) for id in self.userRoutes]
+        user_routes_string = ', '.join(user_routes_string)
+#        print "SELECT service_id FROM calendar NATURAL JOIN trips WHERE start_date <= '{}' AND end_date > '{}' AND route_id IN ({}) AND {}== '1';".format(service_string, service_string, user_routes_string, weekday)
+
+        self.cur.execute("SELECT DISTINCT service_id FROM calendar NATURAL JOIN trips WHERE start_date <= '{}' AND end_date > '{}' AND route_id IN ({}) AND {}== '1';".format(service_string, service_string, user_routes_string, weekday))
+                            
+        self.service_ids = self.cur.fetchone()[0]
+        # TO-DO: Figure out if i ever need to handle more than one service_id
+		
         for routeid in self.userRoutes:
             self.cur.execute("SELECT trip_id                \
-                                    FROM trips NATURAL JOIN routes             \
-                                    WHERE route_id == '" + routeid + "';" )
+                                    FROM trips NATURAL JOIN routes          \
+                                    WHERE route_id == '" + routeid + "'	\
+									AND service_id == '" + self.service_ids + "';")
+										
             self.routeTrips[routeid] = [x[0] for x in self.cur.fetchall()]
         
     def get_times_for_trips_at_stops(self):
@@ -75,7 +110,7 @@ class transdata:
             
             user_stopid_string = ', '.join(self.userStops)
           
-            sql = 'SELECT departure_time,stop_id,trip_id FROM stop_times WHERE trip_id IN ({}) AND stop_id IN ({})'.format(user_trips_string,user_stopid_string)
+            sql = 'SELECT departure_time FROM stop_times WHERE trip_id IN ({}) AND stop_id IN ({})'.format(user_trips_string,user_stopid_string)
             self.cur.execute(sql)
             self.routeTimes[route] = [x for x in self.cur.fetchall()]
             self.routeTimes[route].sort()
@@ -88,25 +123,10 @@ class transdata:
         print self.routeTimes
         return 
 
-    """
-    def build_data(self):
-        for uRoute in self.userRoutes:
-            uRouteTrips = self.get_trip_IDs(uRoute)
-            # Get Trips on that route
-            for (rTripID,headSign) in uRouteTrips:
-                tripStops = self.get_stops_for_trip(rTripID)
-                # Get stops on that trip
-                for (tripStop, time) in tripStops:
-                    #get Stoptimes of those stops
-                    if tripStop in self.userStops:
-                        #compare the stop id to the userlist
-                        print tripStop + " , " + time + " , " + headSign
-    this code should be burned 
-    """  
 
 td = transdata()
 td.init()
 td.add_route("26")
 td.add_route("39")
-td.add_stopID("101362")
+td.add_stopID("100919")
 td.build_data("26")
