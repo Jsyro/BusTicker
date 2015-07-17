@@ -11,6 +11,7 @@ class transdata:
 
     def init(self, agency="1"):
         self.initdb()
+        self.isBuilt = False
         self.agency = agency
 
         #dictionary of {route:List<trip_id>
@@ -47,6 +48,9 @@ class transdata:
 
     def remove_route (self, newRouteNum):
         self.userRoutes.remove(RouteNum)
+     
+    def get_route_name (self, routeNum):
+        return userRoutes[routeNum][1]
         
     """ ------  Stop IDs  -------- """ 
 
@@ -107,7 +111,7 @@ class transdata:
     def get_user_routes (self):	
         # takes the self.userRoutes list and populates lst_RouteId
         user_routes_string = ', '.join(self.userRoutes)
-        sql = 'SELECT route_id,route_short_name, route_long_name FROM routes NATURAL JOIN agency WHERE route_short_name IN ({})'.format(user_routes_string)
+        sql = "SELECT route_id,route_short_name, route_long_name FROM routes NATURAL JOIN agency WHERE route_short_name IN ({}) AND agency_id == '{}'".format(user_routes_string, self.agency)
         self.cur.execute(sql)
         for (id, short, long) in self.cur.fetchall():
             self.userRoutes[short] = [id,long]
@@ -149,85 +153,51 @@ class transdata:
             self.routeTimes[route].sort()
         
         
-    def build_data(self, routenum):
+    def build_data(self):
         self.get_stop_locations()
         self.set_weekday()
         self.set_date_string()
         self.get_user_routes()
         self.get_user_trips()
         self.get_times_for_trips_at_stops()
+        self.isBuilt = True
         #print self.routeTimes
         return 
 
     """ ----- INTERFACE ------ """ 
-    def q_next_bus (self, routeNum):
-        routeId = ''
-        curTime = time.strftime("%H:%M:%S")
-        
-        for id in self.lst_RouteId:
-            if id[:len(routeNum)] == routeNum:
-                routeId = id
 
-        if routeId is None:
-            print "route not included in the build, add_route(routeNumber), build_data(): then try again"
-            
-        for stop_time in self.routeTimes[routeId]:
-            if stop_time[:2] == "24":
-                stop_time[:2] == "00"
-            if stop_time[:2] == "25":
-                stop_time[:2] == "01"
-            if stop_time[:2] == "26":
-                stop_time[:2] == "02"
-            if stop_time[:2] == "27":
-                stop_time[:2] == "03"
-            if stop_time[0] > curTime:
-                return "The next {} {} arrives at {} (#{})".format(routeNum,stop_time[2],stop_time[0], stop_time[1])
-            
-            
     def q_bus (self, routeNum, curTime = time.strftime("%H:%M:%S")):
-        retval = []
-        forwardCount = 1
-        routeId = self.userRoutes[routeNum][0]
-        if routeId is None:
-            print "route not included in the build, add_route(routeNumber), build_data(): then try again"
+        if not self.isBuilt:
+            return "YOU MUST BUILD"
+        if routeNum not in self.userRoutes:
+            return "YOU CAN'T DO THAT: that bus isn't in the build"
+        routeID = self.userRoutes[routeNum][0]
         #print self.routeTimes[routeId]
-        prevTime = ""        
-        for (stop_time,stop_id,headsign) in self.routeTimes[routeId]:
-            
+        for (stop_time,stop_id,headsign) in self.routeTimes[routeID]:
             if stop_time[:2] == "24":
-                stop_time[:2] == "00"
+                stop_time = stop_time.replace("24","12")
             if stop_time[:2] == "25":
-                stop_time[:2] == "01"
+                stop_time = stop_time.replace("25","13")
             if stop_time[:2] == "26":
-                stop_time[:2] == "02"
+                stop_time = stop_time.replace("26","14")
             if stop_time[:2] == "27":
-                stop_time[:2] == "03"
-                
+                stop_time = stop_time.replace("27","15")
             if (stop_time > curTime):
-                #print retval
-                if forwardCount == 1:
-                    retval.append(prevTime)
-                if forwardCount > 4:
-                    return retval
-                retval.append(stop_time)
-                forwardCount = forwardCount + 1
-            prevTime = stop_time
-        return retval
-        
+                return stop_time
+        print "No busses after {} tonight".format(curTime)
         
 if (__name__ == "__main__"):
-            
     td = transdata()
     td.init("1") # 1 is agency ID of Victoria
-    td.add_route("26")
-    td.add_route("39")
-    td.add_stopID("100919")
-    td.add_stopID("101424")
-    td.build_data("26")
-
+    td.add_stopID("100895")
+    td.add_route("6")
+    td.build_data()
 #print td.q_next_bus("26")
-    r = "39"
-    print td.q_bus(r)
+    while True:
+        r = raw_input("What bus do you wanna catch ")
+        print td.q_bus(str(r))
+        if r == 'q':
+            exit()
 
 
 
