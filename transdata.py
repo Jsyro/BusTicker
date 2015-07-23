@@ -186,6 +186,22 @@ class transdata:
                 return stop_time
         print "No busses after {} tonight".format(curTime)
         
+    def routes_at_stop_id(self, stop_id):
+        self.cur.execute("SELECT route_short_name, route_long_name  \
+                          FROM routes                               \
+                          WHERE route_id in (                       \
+                            SELECT DISTINCT route_id                \
+                            FROM stop_times NATURAL JOIN trips      \
+                            WHERE stop_id ==" + stop_id + ")"
+                          )
+        return [x[0] + ", " + x[1] for x in self.cur.fetchall()]
+        
+        self.cur.execute("SELECT DISTINCT trip_headsign         \
+                          FROM trips NATURAL JOIN stop_times    \
+                          WHERE stop_id ==" + stop_id)
+                          
+                          
+                            
 if (__name__ == "__main__"):
     td = transdata()
     td.init("1") # 1 is agency ID of Victoria
@@ -193,11 +209,8 @@ if (__name__ == "__main__"):
     td.add_route("6")
     td.build_data()
 #print td.q_next_bus("26")
-    while True:
-        r = raw_input("What bus do you wanna catch ")
-        print td.q_bus(str(r))
-        if r == 'q':
-            exit()
 
+    #16,26,30,31
+    print td.routes_at_stop_id("100600")
 
 
