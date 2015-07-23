@@ -172,7 +172,6 @@ class transdata:
         if routeNum not in self.userRoutes:
             return "YOU CAN'T DO THAT: that bus isn't in the build"
         routeID = self.userRoutes[routeNum][0]
-        #print self.routeTimes[routeId]
         for (stop_time,stop_id,headsign) in self.routeTimes[routeID]:
             if stop_time[:2] == "24":
                 stop_time = stop_time.replace("24","12")
@@ -196,10 +195,11 @@ class transdata:
                           )
         return [x[0] + ", " + x[1] for x in self.cur.fetchall()]
         
+        """ trying to get the headsign as it indicates direction 
         self.cur.execute("SELECT DISTINCT trip_headsign         \
                           FROM trips NATURAL JOIN stop_times    \
                           WHERE stop_id ==" + stop_id)
-                          
+        """
                           
                             
 if (__name__ == "__main__"):
