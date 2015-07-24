@@ -7,7 +7,7 @@ import os
 import datetime
 import time
 
-class transdata:
+class transdata():
 
     def init(self, agency="1"):
         self.initdb()
@@ -186,12 +186,12 @@ class transdata:
         print "No busses after {} tonight".format(curTime)
         
     def routes_at_stop_id(self, stop_id):
-        self.cur.execute("SELECT route_short_name, route_long_name  \
+        self.cur.execute("SELECT route_id, route_long_name  \
                           FROM routes                               \
                           WHERE route_id in (                       \
                             SELECT DISTINCT route_id                \
                             FROM stop_times NATURAL JOIN trips      \
-                            WHERE stop_id ==" + stop_id + ")"
+                            WHERE stop_id ==" + str(stop_id) + ")"
                           )
         return [x[0] + ", " + x[1] for x in self.cur.fetchall()]
         

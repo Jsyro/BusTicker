@@ -25,7 +25,6 @@ class AddStopIdScreen(QtGui.QWidget):
             print "StopID's are 6 digits long in Victoria BC"
             return
         print "looking for stops at {}".format(self.lcd_number_value)
-
         self.CALLBACK(self.lcd_number_value)
                 
     def init(self, CALLBACK):
