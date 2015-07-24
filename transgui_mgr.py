@@ -9,6 +9,8 @@ import sys
 
 class bt_gui_manager():
 
+    """ +++++++++++   SELECT ROUTES CALLBACKS   +++++++"""
+
     def scr_select_routes_CALLBACK_NEXT(self, set_selected):
         print set_selected
 
@@ -16,6 +18,8 @@ class bt_gui_manager():
         self.scr_select_routes.screen_widget.hide()
         self.scr_add_stop_id.init(self.scr_add_stop_id_CALLBACK)
         self.scr_add_stop_id.screen_widget.show()
+        
+    """ ++++++++++++   ENTER STOP ID CALLBACK    ++++++++"""    
         
     def scr_add_stop_id_CALLBACK(self, stop_id):
         self.set_stop_id.add(stop_id)
@@ -28,7 +32,8 @@ class bt_gui_manager():
         #loads next screen 
         self.scr_select_routes.init(self.scr_select_routes_CALLBACK_NEXT, self.scr_select_routes_CALLBACK_BACK, lst_routes_at_stop)
         
-
+    """ +++++++++++++++   HOW WE START   +++++++++++++++""" 
+        
     def init(self):
         #transdata.py library
         self.td = transdata()
