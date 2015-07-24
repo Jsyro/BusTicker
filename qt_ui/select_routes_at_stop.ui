@@ -35,9 +35,9 @@
   <widget class="QScrollArea" name="scrollArea">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>120</x>
      <y>50</y>
-     <width>681</width>
+     <width>571</width>
      <height>421</height>
     </rect>
    </property>
@@ -52,17 +52,17 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>679</width>
+      <width>569</width>
       <height>419</height>
      </rect>
     </property>
     <widget class="QWidget" name="horizontalLayoutWidget">
      <property name="geometry">
       <rect>
-       <x>9</x>
-       <y>9</y>
-       <width>661</width>
-       <height>401</height>
+       <x>-1</x>
+       <y>-1</y>
+       <width>571</width>
+       <height>421</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="scrollArea_layout"/>
@@ -80,6 +80,25 @@
    </property>
    <property name="text">
     <string>NEXT</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_Back">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>52</y>
+     <width>100</width>
+     <height>420</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>BACK</string>
    </property>
   </widget>
  </widget>

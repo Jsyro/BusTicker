@@ -9,9 +9,14 @@ import sys
 
 class bt_gui_manager():
 
-    def scr_select_routes_CALLBACK(self, routes_selected):
-        print routes_selected
+    def scr_select_routes_CALLBACK_NEXT(self, set_selected):
+        print set_selected
 
+    def scr_select_routes_CALLBACK_BACK(self):
+        self.scr_select_routes.screen_widget.hide()
+        self.scr_add_stop_id.init(self.scr_add_stop_id_CALLBACK)
+        self.scr_add_stop_id.screen_widget.show()
+        
     def scr_add_stop_id_CALLBACK(self, stop_id):
         self.set_stop_id.add(stop_id)
         self.scr_add_stop_id.screen_widget.hide()
@@ -21,7 +26,7 @@ class bt_gui_manager():
         lst_routes_at_stop = self.td.routes_at_stop_id(stop_id)
         
         #loads next screen 
-        self.scr_select_routes.init(self.scr_select_routes_CALLBACK, lst_routes_at_stop)
+        self.scr_select_routes.init(self.scr_select_routes_CALLBACK_NEXT, self.scr_select_routes_CALLBACK_BACK, lst_routes_at_stop)
         
 
     def init(self):
