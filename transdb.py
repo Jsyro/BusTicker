@@ -2,18 +2,22 @@
 import os
 import csv
 import sqlite3 as sql
-
+import re
 
 
 class transdb:
-
-    def init(self):
+    
+    def init(self,db_file):
         schema_sample = []
         schema_type = []
-        conn = sql.connect(os.getcwd() + "\\transdata\\bus_ticker.db")
+        conn = sql.connect(os.getcwd() + "/transdata/" + db_file)
         self.cur = conn.cursor()
-        for fName in os.listdir(os.getcwd() + "\\transdata"):
-            file = open(os.getcwd() + "\\transdata\\" + fName)
+
+        p = re.compile('-?\d+(\.\d+)?')
+
+        for fName in os.listdir(os.getcwd() + "/transdata"):
+            file = open(os.getcwd() + "/transdata/" + fName)
+            print "Opening " + str(fName) + "..."
             schema_sample = []
             schema_type = []
             if fName[-4:] == ".txt":
@@ -26,20 +30,31 @@ class transdb:
                     if sample.isdigit():
                         #print "number - " + name
                         schema_type.append((name,'INTEGER'))
-
+ 
+                    elif p.match(sample) != None: 
+                        schema_type.append((name,'FLOAT'))
+                   
                     else:
                         #print "string - " + name
                         schema_type.append((name,'NVARCHAR(100)'))
+                    
+                    
+                sql_create = "CREATE TABLE {}(".format(fName[:-4])
+                for (name,type) in schema_type:
+                    sql_create += "\n\t{} {}, ".format(name, type)
                 
-                #print schema_type        
-                
-            sql_create = "CREATE TABLE {}(".format(fName[:-4])
-            for (name,type) in schema_type:
-                sql_create += "\n\t{} {}, ".format(name, type)
-                
-            sql_create += " PRIMARY KEY ({} ASC)".format(schema_type[1])    
-            print sql_create
+                sql_create += " PRIMARY KEY ({} ASC))".format(schema_type[0][0])  
+                print sql_create
+                #self.cur.execute(str(sql_create))
+                print "Closing " + str(fName) + "...\n"
+            else:
+                print "Skipping " + str(fName) + "...\n"
+            
+    def clean(self):
+        conn = sql.connect(os.getcwd() + "\\transdata\\bus_ticker.db")
+        
 if (__name__ == '__main__' ):
     tb = transdb()
-    tb.init()
+    tb.init("bus_ticker_test.db")
+    
     
